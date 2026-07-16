@@ -1,8 +1,3 @@
-import React from 'react'
-
-/**
- * ChatItem component representing a single bubble in the sidebar chat feed.
- */
 export default function ChatItem({ sender, text, timestamp }) {
   const isUser = sender === 'user'
   return (

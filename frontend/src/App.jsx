@@ -1,51 +1,128 @@
-import React, { useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import Sidebar from './components/Sidebar'
 import SolutionCard from './components/SolutionCard'
 import JudgeVerdict from './components/JudgeVerdict'
+import Leaderboard from './components/Leaderboard'
+import History from './components/History'
+import Docs from './components/Docs'
 import './App.css'
 
-// ==========================================
-// MAIN APPLICATION CONTAINER
-// ==========================================
+const demoResult = {
+  solution_1: `// Gemini 1.5 Pro - React Performance Tuning
+// 1. Component Memoization via React.memo()
+// 2. Compute Cache via useMemo() and useCallback()
+// 3. Code Splitting / Lazy Loading via React.lazy & Suspense
+
+import React, { useState, useCallback, useMemo } from 'react';
+
+const ExpensiveList = React.memo(({ items, onItemClick }) => {
+  return (
+    <div className="space-y-2">
+      {items.map(item => (
+        <button 
+          key={item.id} 
+          onClick={() => onItemClick(item.id)}
+          className="p-2 bg-void/50 border border-border-subtle rounded w-full text-left"
+        >
+          {item.name}
+        </button>
+      ))}
+    </div>
+  );
+});
+
+export default function App() {
+  const [items, setItems] = useState([
+    { id: 1, name: 'Render Optimization' },
+    { id: 2, name: 'Payload Reduction' }
+  ]);
+  
+  const handleClick = useCallback((id) => {
+    console.log('Clicked item:', id);
+  }, []);
+  
+  return <ExpensiveList items={items} onItemClick={handleClick} />;
+}`,
+  solution_2: `// Claude 3.5 Sonnet - Advanced React Concurrency
+// 1. State Colocation: Keep state local to minimize tree re-renders
+// 2. Concurrency: prioritize critical interactions using useTransition
+// 3. Virtualization: Render only viewport nodes for large lists
+
+import React, { useState, useTransition } from 'react';
+
+export default function SearchPanel() {
+  const [query, setQuery] = useState('');
+  const [filterText, setFilterText] = useState('');
+  const [isPending, startTransition] = useTransition();
+
+  const handleSearch = (e) => {
+    setQuery(e.target.value);
+    startTransition(() => {
+      setFilterText(e.target.value);
+    });
+  };
+
+  return (
+    <div className="p-4 space-y-3">
+      <input 
+        type="text" 
+        value={query} 
+        onChange={handleSearch} 
+        className="w-full bg-void border border-border-subtle p-2 rounded"
+        placeholder="Type to filter..."
+      />
+      {isPending && <span className="text-xs text-amber-500 font-mono">Filtering database...</span>}
+    </div>
+  );
+}`,
+  winner: 'solution_2',
+  judge: {
+    solution_1_score: 8.8,
+    solution_2_score: 9.5,
+    solution_1_response: 'Model A (Gemini) provides clean and structured baseline code using React.memo and useCallback. However, it does not cover concurrency or modern state colocation patterns.',
+    solution_2_response: 'Model B (Claude) won this battle by introducing React 18 Concurrency features (useTransition) and explaining how prioritization prevents main thread blocking during user input.'
+  }
+}
+
 export default function App() {
   const [problem, setProblem] = useState('')
-  
-  // No active challenge by default, so it starts on standby
-  const [activeChallenge, setActiveChallenge] = useState('')
+  const [activeChallenge, setActiveChallenge] = useState('How can I optimize a React application for better performance?')
   const [isLoading, setIsLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  
-  // No result by default
-  const [result, setResult] = useState(null)
-  
+  const [result, setResult] = useState(demoResult)
   const [error, setError] = useState(null)
-  
-  // Start with a clean conversational welcome feed
-  const [messages, setMessages] = useState([
-    {
-      sender: 'bot',
-      text: 'Welcome to AI Battle Arena! Send any programming problem and watch two AI models compete to solve it.',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
-  ])
+  const [activeTab, setActiveTab] = useState('arena')
+  const [theme, setTheme] = useState('dark')
 
   const textareaRef = useRef(null)
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(nextTheme)
+    if (nextTheme === 'light') {
+      document.documentElement.classList.add('light')
+    } else {
+      document.documentElement.classList.remove('light')
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleBattle()
+    }
+  }
 
   const handleBattle = async () => {
     const trimmed = problem.trim()
     if (!trimmed || isLoading) return
 
     setError(null)
-    setResult(null) // Crucial: clear old/dummy results so they don't render during loading or failure
+    setResult(null)
     setProblem('')
     setActiveChallenge(trimmed)
     setIsLoading(true)
-    setSidebarOpen(false) // Auto-close sidebar on mobile to reveal the battle arena!
-
-    // Add user prompt to chat
-    const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    const userMessage = { sender: 'user', text: trimmed, timestamp: timeString }
-    setMessages(prev => [...prev, userMessage])
+    setSidebarOpen(false)
 
     try {
       const res = await fetch('http://localhost:3000/graph', {
@@ -62,199 +139,314 @@ export default function App() {
       const data = await res.json()
       setResult(data)
       setIsLoading(false)
-
-      // Add battle conclusion to chat
-      setMessages(prev => [
-        ...prev,
-        {
-          sender: 'bot',
-          text: `Battle complete! Model A scored ${data.judge.solution_1_score}/10 vs Model B's ${data.judge.solution_2_score}/10. See the results on the right ->`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ])
     } catch (err) {
       console.error(err)
       setError(err.message)
       setIsLoading(false)
-      setMessages(prev => [
-        ...prev,
-        {
-          sender: 'bot',
-          text: `Error during battle execution: ${err.message}`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ])
     }
   }
 
+  const resetBattle = () => {
+    setProblem('')
+    setActiveChallenge('')
+    setResult(null)
+    setError(null)
+  }
+
+  const displaySolution1 = result?.solution_1 || (isLoading ? "Processing prompt... awaiting validation..." : "Awaiting prompt... please enter your programming query in the input bar below.")
+  const displaySolution2 = result?.solution_2 || (isLoading ? "Synthesizing Node ecosystem... awaiting code..." : "Awaiting prompt... please enter your programming query in the input bar below.")
+
   return (
-    <div className="flex h-screen w-screen bg-[#06060b] text-[#f0eef5] overflow-hidden relative">
-      
-      {/* LEFT SIDEBAR PANEL (Conversational thread and input control) */}
+    <div className="flex h-screen w-screen bg-void text-text-primary overflow-hidden relative">
+      <div className="scene-bg" />
+      <div className="hero-orb" />
+
       <Sidebar
-        messages={messages}
-        problem={problem}
-        setProblem={setProblem}
-        handleBattle={handleBattle}
-        isLoading={isLoading}
-        textareaRef={textareaRef}
         isOpen={sidebarOpen}
         setIsOpen={setSidebarOpen}
+        onNewBattle={resetBattle}
       />
 
-      {/* Blurred overlay backdrop when sidebar is open on mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 md:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* RIGHT WORKSPACE AREA (Duel Solutions & Verdict scorecard) */}
-      <main className="flex-1 overflow-y-auto flex flex-col p-6 md:p-8 space-y-6">
+      <div className="flex-grow flex flex-col h-screen relative overflow-hidden z-10">
         
-        {/* Dynamic Workspace Header */}
-        <div className="flex justify-between items-center pb-4 border-b border-white/[0.04]">
-          <div className="flex items-center gap-3">
-            {/* Mobile Sidebar Toggle Button */}
+        {/* Top App Bar */}
+        <header className="fixed top-0 left-0 lg:left-64 right-0 z-40 flex justify-between items-center px-6 h-16 glass-strong border-b border-border-subtle">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center text-sm shadow-md"
-              title="Open Chat Panel"
+              className="lg:hidden p-2 rounded-xl bg-surface-raised border border-border-medium text-text-primary hover:bg-surface hover:text-text-primary active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+              title="Open Navigation"
             >
-              💬
+              <span className="material-symbols-outlined text-[20px]">menu</span>
             </button>
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                <span>⚔️</span> {activeChallenge || 'Duel Ground'}
-              </h2>
-              <p className="text-xs text-gray-500 mt-1 font-mono">{activeChallenge ? activeChallenge : 'Send a challenge to begin the battle'}</p>
+            
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/10 border border-purple-500/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-[14px] text-purple-400">swords</span>
+              </div>
+              <span className="text-[11px] md:text-xs font-black tracking-[0.2em] text-text-primary uppercase font-display">
+                NEURAL BATTLEGROUND
+              </span>
+            </div>
+
+            <nav className="hidden md:flex items-center gap-1 ml-6">
+              {[
+                { id: 'arena', label: 'Arena', icon: 'swords' },
+                { id: 'leaderboard', label: 'Leaderboard', icon: 'leaderboard' },
+                { id: 'history', label: 'History', icon: 'history' },
+                { id: 'docs', label: 'Docs', icon: 'description' }
+              ].map((tab) => (
+                <button 
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    activeTab === tab.id 
+                      ? 'bg-purple-500/15 text-purple-400 border border-purple-500/20' 
+                      : 'text-text-muted hover:text-text-secondary hover:bg-white/[0.03]'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[14px]">{tab.icon}</span>
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleTheme}
+              className="p-2 hover:text-text-primary hover:bg-surface-raised rounded-xl transition-all cursor-pointer flex items-center justify-center text-text-secondary"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+              </span>
+            </button>
+            <button className="p-2 hover:text-text-primary hover:bg-surface-raised rounded-xl transition-all cursor-pointer flex items-center justify-center text-text-secondary">
+              <span className="material-symbols-outlined text-[18px]">notifications</span>
+            </button>
+            <button className="p-2 hover:text-text-primary hover:bg-surface-raised rounded-xl transition-all cursor-pointer flex items-center justify-center text-text-secondary">
+              <span className="material-symbols-outlined text-[18px]">settings</span>
+            </button>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/25 flex items-center justify-center text-[11px] font-black text-purple-400 font-mono ml-1 cursor-pointer hover:border-purple-500/40 transition-all">
+              PR
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs font-semibold">
-            {isLoading ? (
-              <span className="flex items-center gap-1.5 text-purple-400 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full">
-                <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping" />
-                IN PROGRESS
-              </span>
-            ) : result ? (
-              <span className="flex items-center gap-1.5 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                COMPLETE
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5 text-gray-400 bg-white/5 border border-white/10 px-3 py-1 rounded-full">
-                <span className="w-2 h-2 rounded-full bg-gray-500" />
-                STANDBY
-              </span>
-            )}
-          </div>
-        </div>
+        </header>
 
-        {activeChallenge ? (
-          <>
-            {/* Competing Solutions Side-by-side */}
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-3 font-mono">
-                Competing Solutions
-              </h4>
-              <div className="flex flex-col lg:flex-row gap-5">
+        {/* Main Canvas */}
+        <main className="flex-1 mt-16 pb-[140px] lg:pb-36 px-4 md:px-6 max-w-7xl mx-auto w-full flex flex-col gap-6 pt-6 overflow-y-auto">
+          
+          {activeTab === 'arena' && (
+            <>
+              {/* Battle Header */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-5 anim-fade-up">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2.5">
+                    {result ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-[10px] font-bold font-mono tracking-wider">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        VERDICT REACHED
+                      </span>
+                    ) : isLoading ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg text-[10px] font-bold font-mono tracking-wider animate-pulse">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                        INITIATING BATTLE
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/[0.03] text-text-muted border border-border-subtle rounded-lg text-[10px] font-bold font-mono tracking-wider">
+                        <span className="w-1.5 h-1.5 rounded-full bg-text-muted" />
+                        STANDBY
+                      </span>
+                    )}
+                    {result && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/[0.03] text-text-muted border border-border-subtle rounded-lg text-[10px] font-mono">
+                        <span className="material-symbols-outlined text-[11px]">timer</span> 4.2s
+                      </span>
+                    )}
+                  </div>
+                  <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-text-primary">
+                    {activeChallenge ? "System Architecture Generation" : "Arena Duel Ground"}
+                  </h1>
+                  <p className="text-xs text-text-muted font-mono max-w-xl">
+                    {activeChallenge ? `Prompt: "${activeChallenge}"` : "Awaiting input at the bottom to start matching models..."}
+                  </p>
+                </div>
+              </div>
+
+              {/* 2-Column Competitor Grid - FIXED: items-stretch prevents overlap */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch anim-fade-up stagger-1">
                 <SolutionCard
                   modelName="Model A"
                   accentColor="#4d8eff"
-                  solution={result?.solution_1}
+                  iconName="auto_awesome"
+                  solution={displaySolution1}
                   score={result?.judge?.solution_1_score}
                   isLoading={isLoading}
-                  badgeStyle={
-                    result?.winner === 'solution_1'
-                      ? { bg: '#fbbf2415', border: '#fbbf2430', color: '#fbbf24' }
-                      : null
-                  }
+                  isWinner={result?.winner === 'solution_1'}
                 />
-
                 <SolutionCard
                   modelName="Model B"
                   accentColor="#34d399"
-                  solution={result?.solution_2}
+                  iconName="psychology"
+                  solution={displaySolution2}
                   score={result?.judge?.solution_2_score}
                   isLoading={isLoading}
-                  badgeStyle={
-                    result?.winner === 'solution_2'
-                      ? { bg: '#fbbf2415', border: '#fbbf2430', color: '#fbbf24' }
-                      : null
-                  }
+                  isWinner={result?.winner === 'solution_2'}
                 />
               </div>
+
+              {/* Loading Referee Status */}
+              {isLoading && (
+                <div className="bg-card-bg/80 backdrop-blur-sm border border-amber-500/15 rounded-2xl p-5 flex items-center justify-center gap-4 w-full shadow-lg anim-scale">
+                  <div className="relative">
+                    <div className="w-8 h-8 rounded-full bg-void border border-amber-500/30 flex items-center justify-center animate-spin">
+                      <span className="material-symbols-outlined text-amber-500 text-[14px]">gavel</span>
+                    </div>
+                    <div className="absolute inset-0 rounded-full border border-amber-500/20 animate-ping" />
+                  </div>
+                  <div className="text-center">
+                    <span className="text-[11px] text-amber-400 font-bold uppercase font-mono tracking-wider block">
+                      Referee evaluating solutions
+                    </span>
+                    <span className="text-[10px] text-text-muted font-mono">
+                      Analyzing technical depth, clarity, and metrics
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Judge's Breakdown */}
+              {result && (
+                <div className="mt-4 anim-fade-up stagger-2">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-amber-500 text-[14px]">gavel</span>
+                    </div>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted font-mono">
+                      Detailed Judge's Breakdown
+                    </h4>
+                  </div>
+                  <JudgeVerdict
+                    judge={result.judge}
+                    winner={result.winner}
+                    solution1={result.solution_1}
+                    solution2={result.solution_2}
+                  />
+                </div>
+              )}
+
+              {/* Error Notification */}
+              {error && !result && (
+                <div className="bg-red-500/5 border border-red-500/15 text-red-400 text-sm p-4 rounded-2xl flex items-center gap-3 anim-scale">
+                  <span className="material-symbols-outlined text-[20px]">error</span>
+                  <div>
+                    <p className="font-bold text-xs">Execution Error</p>
+                    <p className="text-[11px] opacity-80 font-mono">{error}</p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === 'leaderboard' && <Leaderboard />}
+
+          {activeTab === 'history' && (
+            <History 
+              onLoadChallenge={(prompt, data) => {
+                setError(null);
+                setProblem('');
+                setActiveChallenge(prompt);
+                setResult(data);
+                setActiveTab('arena');
+              }}
+            />
+          )}
+
+          {activeTab === 'docs' && <Docs />}
+
+        </main>
+
+        {/* Bottom Input Bar */}
+        {activeTab === 'arena' && (
+          isLoading ? (
+            <div className="fixed bottom-[80px] lg:bottom-0 left-0 lg:left-64 right-0 p-4 bg-gradient-to-t from-void via-void/95 to-transparent z-40">
+              <div className="max-w-7xl mx-auto w-full flex items-center justify-center">
+                <button 
+                  onClick={() => {
+                    setIsLoading(false);
+                    setProblem('');
+                    setActiveChallenge('');
+                    setResult(null);
+                  }}
+                  className="px-6 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 rounded-xl text-[11px] font-bold font-mono tracking-wider transition-all uppercase flex items-center gap-2 active:scale-95 shadow-lg cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[15px] animate-pulse">stop_circle</span>
+                  <span>Stop generation</span>
+                </button>
+              </div>
             </div>
-
-            {/* Judge's Analysis breakdown */}
-            {result && (
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-3 font-mono">
-                  Judge's Analysis
-                </h4>
-                <JudgeVerdict
-                  judge={result.judge}
-                  winner={result.winner}
-                />
-              </div>
-            )}
-
-            {/* Error Notification (Only shows when no active result exists, preventing overlap) */}
-            {error && !result && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-4 rounded-xl flex items-center gap-3">
-                <span>⚠️</span>
-                <div>
-                  <p className="font-bold">Execution Error</p>
-                  <p className="text-xs opacity-80">{error}</p>
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          /* High-Fidelity Standby/Onboarding Screen */
-          <div className="flex-1 w-full flex flex-col items-center justify-center p-4 md:p-8">
-            <div className="max-w-2xl w-full text-center space-y-8 flex flex-col items-center justify-center my-auto">
-              {/* Holographic Glowing Arena Icon */}
-              <div className="relative flex items-center justify-center">
-                <div className="absolute inset-0 bg-purple-500/10 rounded-full blur-3xl w-40 h-40 animate-pulse" />
-                <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-[#12121c] to-[#0e0e18] border border-white/10 flex items-center justify-center text-4xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-transform duration-500 hover:scale-105">
-                  <span className="animate-pulse">⚔️</span>
-                </div>
-              </div>
-
-              {/* Welcome & Instructions */}
-              <div className="space-y-3">
-                <h3 className="text-3xl font-extrabold text-white tracking-tight bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent">
-                  Enter the Duel Ground
-                </h3>
-                <p className="text-sm text-gray-400 leading-relaxed max-w-md mx-auto">
-                  Submit a programming challenge in the left panel to watch two elite AI models battle in real-time, evaluated by an LLM referee.
-                </p>
-              </div>
-
-              {/* Feature Highlights Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full pt-4">
-                <div className="bg-[#12121c]/40 border border-white/5 p-5 rounded-2xl flex flex-col items-center space-y-2.5 transition-all duration-300 hover:border-purple-500/30 hover:bg-purple-500/5 hover:-translate-y-1">
-                  <div className="text-2xl p-2 rounded-xl bg-purple-500/10 text-purple-400">🤖</div>
-                  <h4 className="text-xs font-bold text-white tracking-wide uppercase">Dual LLMs</h4>
-                  <p className="text-[10px] text-gray-500 leading-normal">Two separate LLM models independently program solutions.</p>
-                </div>
-                <div className="bg-[#12121c]/40 border border-white/5 p-5 rounded-2xl flex flex-col items-center space-y-2.5 transition-all duration-300 hover:border-emerald-500/30 hover:bg-emerald-500/5 hover:-translate-y-1">
-                  <div className="text-2xl p-2 rounded-xl bg-emerald-500/10 text-emerald-400">⚖️</div>
-                  <h4 className="text-xs font-bold text-white tracking-wide uppercase">AI Referee</h4>
-                  <p className="text-[10px] text-gray-500 leading-normal">A third judge analyzes correctness, efficiency, and edge cases.</p>
-                </div>
-                <div className="bg-[#12121c]/40 border border-white/5 p-5 rounded-2xl flex flex-col items-center space-y-2.5 transition-all duration-300 hover:border-cyan-500/30 hover:bg-cyan-500/5 hover:-translate-y-1">
-                  <div className="text-2xl p-2 rounded-xl bg-cyan-500/10 text-cyan-400">⚡</div>
-                  <h4 className="text-xs font-bold text-white tracking-wide uppercase">Scorecard</h4>
-                  <p className="text-[10px] text-gray-500 leading-normal">Detailed verdicts with numerical scores and side-by-side reviews.</p>
+          ) : (
+            <div className="fixed bottom-[80px] lg:bottom-0 left-0 lg:left-64 right-0 p-4 bg-gradient-to-t from-void via-void/95 to-transparent z-40">
+              <div className="max-w-7xl mx-auto w-full relative">
+                <div className="bg-card-bg/90 backdrop-blur-xl border border-border-medium rounded-2xl flex items-end p-2.5 focus-within:border-purple-500/40 focus-within:ring-2 focus-within:ring-purple-500/10 transition-all shadow-2xl shadow-black/30">
+                  <button className="p-2 text-text-muted hover:text-purple-400 transition-colors rounded-xl mb-0.5 cursor-pointer">
+                    <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                  </button>
+                  <textarea
+                    ref={textareaRef}
+                    rows="1"
+                    value={problem}
+                    onChange={(e) => setProblem(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="flex-1 bg-transparent border-none focus:ring-0 text-text-primary text-[13px] font-sans resize-none py-3 px-3 max-h-32 placeholder:text-text-muted focus:outline-none"
+                    placeholder={result ? "Ask a follow-up or start a new comparison..." : "Ask a programming challenge..."}
+                  />
+                  <button 
+                    onClick={handleBattle}
+                    disabled={!problem.trim()}
+                    className="p-2.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white rounded-xl ml-2 mb-0.5 transition-all self-end group disabled:opacity-30 disabled:hover:from-purple-600 disabled:hover:to-purple-500 active:scale-95 cursor-pointer shadow-lg shadow-purple-500/20"
+                  >
+                    <span className="material-symbols-outlined text-[18px] group-hover:translate-x-0.5 transition-transform">send</span>
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
+          )
         )}
-      </main>
+
+        {/* Mobile Bottom Nav */}
+        <nav className="lg:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-16 glass-strong border-t border-border-subtle">
+          {[
+            { id: 'arena', icon: 'swords', label: 'Arena' },
+            { id: 'history', icon: 'history', label: 'History' },
+            { id: 'leaderboard', icon: 'leaderboard', label: 'Leaderboard' }
+          ].map((tab) => (
+            <button 
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-col items-center justify-center rounded-xl px-5 py-1.5 transition-all cursor-pointer ${
+                activeTab === tab.id 
+                  ? 'bg-purple-500/15 text-purple-400 border border-purple-500/25 scale-105' 
+                  : 'text-text-muted hover:text-purple-400'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: activeTab === tab.id ? "'FILL' 1" : "" }}>
+                {tab.icon}
+              </span>
+              <span className="font-mono text-[8px] mt-0.5 font-bold tracking-wider uppercase">{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+
+      </div>
     </div>
   )
 }

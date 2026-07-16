@@ -1,96 +1,81 @@
-import React, { useRef, useEffect } from 'react'
-import ChatItem from './ChatItem'
-
-/**
- * Sidebar component containing branding, chat history, and input controls.
- */
-export default function Sidebar({
-  messages,
-  problem,
-  setProblem,
-  handleBattle,
-  isLoading,
-  textareaRef,
-  isOpen,
-  setIsOpen
-}) {
-  const chatEndRef = useRef(null)
-
-  // Auto-scroll chat feed to the bottom on new messages
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleBattle()
-    }
-  }
-
+export default function Sidebar({ isOpen, setIsOpen, onNewBattle }) {
   return (
-    <aside className={`fixed inset-y-0 left-0 w-80 md:w-[350px] bg-[#0c0c14] border-r border-white/10 flex flex-col h-screen shrink-0 z-30 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
-      isOpen ? 'translate-x-0' : '-translate-x-full'
-    }`}>
-      {/* Branding Header */}
-      <div className="p-5 border-b border-white/10 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-lg shadow-inner">
-            ⚔️
-          </div>
-          <div>
-            <h1 className="font-sans font-extrabold text-sm text-white tracking-wide uppercase">
-              Ai Battle Arena
-            </h1>
-            <p className="text-[9px] font-mono font-semibold text-purple-400 tracking-[0.18em] uppercase">
-              LANGGRAPH POWERED
-            </p>
+    <>
+      <aside className={`fixed inset-y-0 left-0 w-64 bg-surface/95 backdrop-blur-xl border-r border-border-medium flex flex-col h-screen shrink-0 z-30 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        {/* Brand Header */}
+        <div className="p-5 border-b border-border-medium">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500/20 to-cyan-500/10 border border-purple-500/25 flex items-center justify-center shadow-lg shadow-purple-500/5">
+                <span className="material-symbols-outlined text-[18px] text-purple-400">swords</span>
+              </div>
+              <div>
+                <h2 className="font-sans font-extrabold text-[13px] text-text-primary tracking-wide uppercase leading-tight">
+                  Arena Control
+                </h2>
+                <p className="text-[8px] font-mono font-bold text-purple-400 tracking-[0.2em] uppercase mt-0.5">
+                  PRO RESEARCHER
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="lg:hidden p-1.5 rounded-xl bg-surface-raised border border-border-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+              aria-label="Close sidebar"
+            >
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
           </div>
         </div>
 
-        {/* Close button on mobile */}
-        <button
-          onClick={() => setIsOpen(false)}
-          className="md:hidden p-1.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors"
-          aria-label="Close sidebar"
-        >
-          ✕
-        </button>
-      </div>
+        {/* Nav Items */}
+        <div className="flex-1 flex flex-col gap-1 p-4">
+          <button
+            onClick={() => {
+              if (onNewBattle) onNewBattle();
+              setIsOpen(false);
+            }}
+            className="flex items-center gap-3 w-full p-3 bg-gradient-to-r from-purple-600/15 to-purple-500/5 text-purple-400 border border-purple-500/20 rounded-xl cursor-pointer hover:from-purple-600/25 hover:to-purple-500/10 hover:text-purple-300 transition-all text-[13px] font-bold text-left active:scale-[0.98] duration-150 shadow-sm shadow-purple-500/5"
+          >
+            <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>add_box</span>
+            <span>New Battle</span>
+          </button>
 
-      {/* Chat History Feed */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-        {messages.map((msg, index) => (
-          <ChatItem
-            key={index}
-            sender={msg.sender}
-            text={msg.text}
-            timestamp={msg.timestamp}
-          />
-        ))}
-        <div ref={chatEndRef} />
-      </div>
+          <div className="mt-3 mb-2">
+            <span className="text-[8px] font-mono font-bold text-text-muted tracking-[0.2em] uppercase px-3">Navigation</span>
+          </div>
 
-      {/* Input controls */}
-      <div className="p-4 border-t border-white/10 bg-[#0a0a0f]/80 backdrop-blur-md flex flex-col gap-3">
-        <textarea
-          ref={textareaRef}
-          className="w-full bg-[#0e0e18] border border-white/10 rounded-xl p-3 text-[13px] text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 resize-none transition-all"
-          placeholder="Send a programming challenge..."
-          rows="3"
-          value={problem}
-          onChange={(e) => setProblem(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isLoading}
-        />
-        <button
-          onClick={handleBattle}
-          disabled={isLoading || !problem.trim()}
-          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 active:scale-[0.98] disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed text-white text-[13px] font-bold py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(168,85,247,0.2)]"
-        >
-          {isLoading ? 'INITIATING BATTLE...' : 'Send to Battle'}
-        </button>
-      </div>
-    </aside>
+          {[
+            { icon: 'bookmark', label: 'Saved Comparisons' },
+            { icon: 'tune', label: 'Model Settings' },
+            { icon: 'code', label: 'API Access' }
+          ].map((item) => (
+            <a key={item.label} href="#" className="flex items-center gap-3 p-2.5 text-text-muted hover:bg-surface-raised hover:text-text-primary rounded-xl transition-all text-[13px] font-semibold group">
+              <span className="material-symbols-outlined text-[18px] group-hover:text-purple-400 transition-colors">{item.icon}</span>
+              <span>{item.label}</span>
+            </a>
+          ))}
+        </div>
+
+        {/* Bottom Actions */}
+        <div className="mt-auto p-4 flex flex-col gap-2.5 border-t border-border-medium">
+          <button className="w-full py-2.5 bg-gradient-to-r from-purple-600/15 to-purple-500/10 text-purple-400 border border-purple-500/20 rounded-xl text-[10px] font-bold font-mono tracking-[0.15em] hover:from-purple-600/25 hover:to-purple-500/15 transition-all uppercase cursor-pointer shadow-sm shadow-purple-500/5">
+            Upgrade to Ultra
+          </button>
+
+          <a href="#" className="flex items-center gap-3 p-2 text-text-muted hover:text-text-primary transition-colors text-[12px] font-semibold rounded-lg hover:bg-white/[0.02]">
+            <span className="material-symbols-outlined text-[16px]">help</span>
+            <span>Help</span>
+          </a>
+
+          <a href="#" className="flex items-center gap-3 p-2 text-text-muted hover:text-red-400 transition-colors text-[12px] font-semibold rounded-lg hover:bg-red-500/[0.03]">
+            <span className="material-symbols-outlined text-[16px]">logout</span>
+            <span>Sign Out</span>
+          </a>
+        </div>
+      </aside>
+    </>
   )
 }
