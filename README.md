@@ -142,4 +142,4 @@ Battles are stored using a Mongoose schema in `backend/src/schema/chatSchema.js`
 ---
 
 ## 📄 License
-This project is licensed under the ISC License.
+This project is licensed under the MIT License.
