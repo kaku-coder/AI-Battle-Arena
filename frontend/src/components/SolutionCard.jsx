@@ -1,13 +1,20 @@
 import TypewriterEffect from './TypewriterEffect'
 
-export default function SolutionCard({ modelName, score, solution, isLoading, accentColor, iconName, isWinner }) {
+export default function SolutionCard({
+  modelName,
+  score,
+  solution,
+  isLoading,
+  accentColor,
+  iconName,
+  isWinner
+}) {
   return (
     <div
-      className={`solution-card bg-card-bg border rounded-2xl overflow-hidden flex flex-col relative transition-all duration-500 group ${
-        isWinner 
-          ? 'border-amber-500/50 shadow-[0_0_40px_-8px_rgba(245,158,11,0.3)] winner-card' 
+      className={`solution-card bg-card-bg border rounded-2xl overflow-hidden flex flex-col relative transition-all duration-500 group ${isWinner
+          ? 'border-amber-500/50 shadow-[0_0_40px_-8px_rgba(245,158,11,0.3)] winner-card'
           : 'border-border-subtle hover:border-border-medium hover:shadow-lg hover:shadow-purple-500/5'
-      }`}
+        }`}
       style={{ borderTop: `2px solid ${isWinner ? '#fbbf24' : accentColor}` }}
     >
       {isWinner && (
@@ -34,7 +41,7 @@ export default function SolutionCard({ modelName, score, solution, isLoading, ac
           {score !== null && score !== undefined && (
             <div className="flex items-center gap-1.5">
               <div className="w-16 h-1.5 rounded-full bg-white/5 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-1000 ease-out" 
+                <div className="h-full rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${(score / 10) * 100}%`, background: `linear-gradient(90deg, ${accentColor}, ${accentColor}cc)` }} />
               </div>
               <span className="font-mono text-[11px] text-text-secondary font-semibold">{score}</span>

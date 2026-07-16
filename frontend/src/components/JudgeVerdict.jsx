@@ -1,6 +1,6 @@
-export default function JudgeVerdict({ judge, winner, solution1, solution2 }) {
+export default function JudgeVerdict({ judge, winner, solution1, solution2, model1Name = 'Model A', model2Name = 'Model B' }) {
   if (!judge) return null
-  const winnerName = winner === 'solution_1' ? 'Model A' : winner === 'solution_2' ? 'Model B' : 'Draw'
+  const winnerName = winner === 'solution_1' ? model1Name : winner === 'solution_2' ? model2Name : 'Draw'
   const isDraw = winner === 'draw'
   const winnerAnswer = isDraw ? null : winner === 'solution_1' ? solution1 : solution2
 
@@ -33,7 +33,7 @@ export default function JudgeVerdict({ judge, winner, solution1, solution2 }) {
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-500 rounded-2xl" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(77,142,255,0.06) 0%, transparent 70%)' }} />
             <div className="flex items-center gap-2 relative z-10">
               <div className="w-2.5 h-2.5 rounded-full bg-[#4d8eff] shadow-[0_0_10px_rgba(77,142,255,0.5)]" />
-              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-[0.12em]">Model A</span>
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-[0.12em]">{model1Name}</span>
             </div>
             <div className="text-5xl font-black text-text-primary leading-none font-mono relative z-10">
               {judge.solution_1_score}
@@ -49,7 +49,7 @@ export default function JudgeVerdict({ judge, winner, solution1, solution2 }) {
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-500 rounded-2xl" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(52,211,153,0.06) 0%, transparent 70%)' }} />
             <div className="flex items-center gap-2 relative z-10">
               <div className="w-2.5 h-2.5 rounded-full bg-[#34d399] shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
-              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-[0.12em]">Model B</span>
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-[0.12em]">{model2Name}</span>
             </div>
             <div className="text-5xl font-black text-text-primary leading-none font-mono relative z-10">
               {judge.solution_2_score}

@@ -1,4 +1,5 @@
 import "dotenv/config";
+import mongoose from "mongoose";
 
 type ConfigType = {
     readonly GOOGLE_API_KEY: string;
@@ -14,4 +15,15 @@ const config: ConfigType = {
     GROW_API_KEY: process.env.GROW_API_KEY || ""
 }
 
-export default config;
+export const connectDatabase =()=>{
+    mongoose.connect(process.env.MONGOOSE_URL as string)
+    .then(()=>{
+        console.log("database connected")
+    }).catch((err)=>{
+        console.log(err)
+    })
+}
+
+
+
+export default config;  

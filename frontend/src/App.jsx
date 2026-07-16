@@ -6,90 +6,16 @@ import Leaderboard from './components/Leaderboard'
 import History from './components/History'
 import Docs from './components/Docs'
 import './App.css'
+import axios from 'axios';
 
-const demoResult = {
-  solution_1: `// Gemini 1.5 Pro - React Performance Tuning
-// 1. Component Memoization via React.memo()
-// 2. Compute Cache via useMemo() and useCallback()
-// 3. Code Splitting / Lazy Loading via React.lazy & Suspense
 
-import React, { useState, useCallback, useMemo } from 'react';
-
-const ExpensiveList = React.memo(({ items, onItemClick }) => {
-  return (
-    <div className="space-y-2">
-      {items.map(item => (
-        <button 
-          key={item.id} 
-          onClick={() => onItemClick(item.id)}
-          className="p-2 bg-void/50 border border-border-subtle rounded w-full text-left"
-        >
-          {item.name}
-        </button>
-      ))}
-    </div>
-  );
-});
-
-export default function App() {
-  const [items, setItems] = useState([
-    { id: 1, name: 'Render Optimization' },
-    { id: 2, name: 'Payload Reduction' }
-  ]);
-  
-  const handleClick = useCallback((id) => {
-    console.log('Clicked item:', id);
-  }, []);
-  
-  return <ExpensiveList items={items} onItemClick={handleClick} />;
-}`,
-  solution_2: `// Claude 3.5 Sonnet - Advanced React Concurrency
-// 1. State Colocation: Keep state local to minimize tree re-renders
-// 2. Concurrency: prioritize critical interactions using useTransition
-// 3. Virtualization: Render only viewport nodes for large lists
-
-import React, { useState, useTransition } from 'react';
-
-export default function SearchPanel() {
-  const [query, setQuery] = useState('');
-  const [filterText, setFilterText] = useState('');
-  const [isPending, startTransition] = useTransition();
-
-  const handleSearch = (e) => {
-    setQuery(e.target.value);
-    startTransition(() => {
-      setFilterText(e.target.value);
-    });
-  };
-
-  return (
-    <div className="p-4 space-y-3">
-      <input 
-        type="text" 
-        value={query} 
-        onChange={handleSearch} 
-        className="w-full bg-void border border-border-subtle p-2 rounded"
-        placeholder="Type to filter..."
-      />
-      {isPending && <span className="text-xs text-amber-500 font-mono">Filtering database...</span>}
-    </div>
-  );
-}`,
-  winner: 'solution_2',
-  judge: {
-    solution_1_score: 8.8,
-    solution_2_score: 9.5,
-    solution_1_response: 'Model A (Gemini) provides clean and structured baseline code using React.memo and useCallback. However, it does not cover concurrency or modern state colocation patterns.',
-    solution_2_response: 'Model B (Claude) won this battle by introducing React 18 Concurrency features (useTransition) and explaining how prioritization prevents main thread blocking during user input.'
-  }
-}
 
 export default function App() {
   const [problem, setProblem] = useState('')
   const [activeChallenge, setActiveChallenge] = useState('How can I optimize a React application for better performance?')
   const [isLoading, setIsLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [result, setResult] = useState(demoResult)
+  const [result, setResult] = useState()
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('arena')
   const [theme, setTheme] = useState('dark')
@@ -125,18 +51,18 @@ export default function App() {
     setSidebarOpen(false)
 
     try {
-      const res = await fetch('http://localhost:3000/graph', {
+      let res = await fetch('http://localhost:3000/graph', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ problem: trimmed })
       })
-
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error || `Server error (${res.status})`)
       }
 
       const data = await res.json()
+      console.log("Model 1:", data.model_1, "Model 2:", data.model_2)
       setResult(data)
       setIsLoading(false)
     } catch (err) {
@@ -144,6 +70,7 @@ export default function App() {
       setError(err.message)
       setIsLoading(false)
     }
+
   }
 
   const resetBattle = () => {
@@ -175,7 +102,7 @@ export default function App() {
       )}
 
       <div className="flex-grow flex flex-col h-screen relative overflow-hidden z-10">
-        
+
         {/* Top App Bar */}
         <header className="fixed top-0 left-0 lg:left-64 right-0 z-40 flex justify-between items-center px-6 h-16 glass-strong border-b border-border-subtle">
           <div className="flex items-center gap-4">
@@ -186,7 +113,7 @@ export default function App() {
             >
               <span className="material-symbols-outlined text-[20px]">menu</span>
             </button>
-            
+
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/10 border border-purple-500/20 flex items-center justify-center">
                 <span className="material-symbols-outlined text-[14px] text-purple-400">swords</span>
@@ -203,14 +130,13 @@ export default function App() {
                 { id: 'history', label: 'History', icon: 'history' },
                 { id: 'docs', label: 'Docs', icon: 'description' }
               ].map((tab) => (
-                <button 
+                <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                    activeTab === tab.id 
-                      ? 'bg-purple-500/15 text-purple-400 border border-purple-500/20' 
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${activeTab === tab.id
+                      ? 'bg-purple-500/15 text-purple-400 border border-purple-500/20'
                       : 'text-text-muted hover:text-text-secondary hover:bg-white/[0.03]'
-                  }`}
+                    }`}
                 >
                   <span className="material-symbols-outlined text-[14px]">{tab.icon}</span>
                   {tab.label}
@@ -220,7 +146,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={toggleTheme}
               className="p-2 hover:text-text-primary hover:bg-surface-raised rounded-xl transition-all cursor-pointer flex items-center justify-center text-text-secondary"
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -243,7 +169,7 @@ export default function App() {
 
         {/* Main Canvas */}
         <main className="flex-1 mt-16 pb-[140px] lg:pb-36 px-4 md:px-6 max-w-7xl mx-auto w-full flex flex-col gap-6 pt-6 overflow-y-auto">
-          
+
           {activeTab === 'arena' && (
             <>
               {/* Battle Header */}
@@ -284,7 +210,7 @@ export default function App() {
               {/* 2-Column Competitor Grid - FIXED: items-stretch prevents overlap */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch anim-fade-up stagger-1">
                 <SolutionCard
-                  modelName="Model A"
+                  modelName={result?.model_1 || "Model A"}
                   accentColor="#4d8eff"
                   iconName="auto_awesome"
                   solution={displaySolution1}
@@ -293,7 +219,7 @@ export default function App() {
                   isWinner={result?.winner === 'solution_1'}
                 />
                 <SolutionCard
-                  modelName="Model B"
+                  modelName={result?.model_2 || "Model B"}
                   accentColor="#34d399"
                   iconName="psychology"
                   solution={displaySolution2}
@@ -339,6 +265,8 @@ export default function App() {
                     winner={result.winner}
                     solution1={result.solution_1}
                     solution2={result.solution_2}
+                    model1Name={result.model_1}
+                    model2Name={result.model_2}
                   />
                 </div>
               )}
@@ -359,7 +287,7 @@ export default function App() {
           {activeTab === 'leaderboard' && <Leaderboard />}
 
           {activeTab === 'history' && (
-            <History 
+            <History
               onLoadChallenge={(prompt, data) => {
                 setError(null);
                 setProblem('');
@@ -379,7 +307,7 @@ export default function App() {
           isLoading ? (
             <div className="fixed bottom-[80px] lg:bottom-0 left-0 lg:left-64 right-0 p-4 bg-gradient-to-t from-void via-void/95 to-transparent z-40">
               <div className="max-w-7xl mx-auto w-full flex items-center justify-center">
-                <button 
+                <button
                   onClick={() => {
                     setIsLoading(false);
                     setProblem('');
@@ -409,7 +337,7 @@ export default function App() {
                     className="flex-1 bg-transparent border-none focus:ring-0 text-text-primary text-[13px] font-sans resize-none py-3 px-3 max-h-32 placeholder:text-text-muted focus:outline-none"
                     placeholder={result ? "Ask a follow-up or start a new comparison..." : "Ask a programming challenge..."}
                   />
-                  <button 
+                  <button
                     onClick={handleBattle}
                     disabled={!problem.trim()}
                     className="p-2.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white rounded-xl ml-2 mb-0.5 transition-all self-end group disabled:opacity-30 disabled:hover:from-purple-600 disabled:hover:to-purple-500 active:scale-95 cursor-pointer shadow-lg shadow-purple-500/20"
@@ -429,14 +357,13 @@ export default function App() {
             { id: 'history', icon: 'history', label: 'History' },
             { id: 'leaderboard', icon: 'leaderboard', label: 'Leaderboard' }
           ].map((tab) => (
-            <button 
+            <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center justify-center rounded-xl px-5 py-1.5 transition-all cursor-pointer ${
-                activeTab === tab.id 
-                  ? 'bg-purple-500/15 text-purple-400 border border-purple-500/25 scale-105' 
+              className={`flex flex-col items-center justify-center rounded-xl px-5 py-1.5 transition-all cursor-pointer ${activeTab === tab.id
+                  ? 'bg-purple-500/15 text-purple-400 border border-purple-500/25 scale-105'
                   : 'text-text-muted hover:text-purple-400'
-              }`}
+                }`}
             >
               <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: activeTab === tab.id ? "'FILL' 1" : "" }}>
                 {tab.icon}
