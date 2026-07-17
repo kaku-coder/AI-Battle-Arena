@@ -1,7 +1,7 @@
 import { HumanMessage } from "@langchain/core/messages";
 import { StateGraph, Annotation, START, END } from "@langchain/langgraph";
 import { z } from "zod";
-import { mistral as MistralAI, cohere as Cohere, grow } from "./model.service.js";
+import { mistral as MistralAI, cohere as Cohere, grow, gemini } from "./model.service.js";
 
 // ==========================================
 // STEP 1: DEFINE STATE SCHEMA (using Annotation API)
@@ -79,7 +79,9 @@ async function generateSolutions(state: typeof GraphState.State) {
 async function judgeNode(state: typeof GraphState.State) {
     const { problem, solution_1, solution_2 } = state;
 
-    const structuredJudge = grow.withStructuredOutput(JudgeResponseSchema);
+    const structuredJudge = grow.withStructuredOutput(JudgeResponseSchema).withFallbacks([
+        gemini.withStructuredOutput(JudgeResponseSchema)
+    ]);
 
     const parsedResponse = await structuredJudge.invoke([
         ["system", JUDGE_SYSTEM_PROMPT],

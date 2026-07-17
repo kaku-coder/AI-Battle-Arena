@@ -3,14 +3,28 @@ import type { Request, Response } from "express"
 import graph from "./services/grap.ai.service.js"
 import cors from 'cors'
 import Chat from "./schema/chatSchema.js"
+import { authMiddleware, AuthRequest } from "./middleware/auth.js"
+import authRoutes from "./routes/authRoutes.js"
+import comparisonRoutes from "./routes/comparisonRoutes.js"
+import leaderboardRoutes from "./routes/leaderboardRoutes.js"
+import path from "path"
+import { fileURLToPath } from "url"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const app = express()
 
 app.use(express.json())
 app.use(cors())
 
+app.use("/api/auth", authRoutes)
+app.use("/api/comparisons", comparisonRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
+
 app.post("/graph", async (req: Request, res: Response) => {
     try {
+        console.log("Request received at /graph");
         const problem = req.body.problem || req.body.message;
         if (!problem) {
             return res.status(400).json({ error: "problem or message is required" })
@@ -28,7 +42,7 @@ app.post("/graph", async (req: Request, res: Response) => {
         try {
             const newChat = new Chat({
                 problem,
-                userId: req.body.userId || "guest",
+                userId: "guest",
                 solution_1: responseData.solution_1,
                 solution_2: responseData.solution_2,
                 model_1: responseData.model_1,
@@ -39,24 +53,47 @@ app.post("/graph", async (req: Request, res: Response) => {
             });
             await newChat.save();
         } catch (dbError) {
-            console.error("Failed to save chat to database:", dbError);
+            console.error("DB save failed (non-blocking):", dbError);
         }
 
         res.status(200).json(responseData);
     } catch (error: any) {
-        console.error("Error:", error);
-        res.status(500).json({ error: error.message || "An error occurred." })
+        console.error("Error in /graph:", error.message);
+        if (!res.headersSent) {
+            res.status(500).json({ error: error.message || "An error occurred." })
+        }
     }
 })
 
 app.get("/history", async (req: Request, res: Response) => {
     try {
-        const history = await Chat.find().sort({ createdAt: -1 });
+        const history = await (Chat as any).find().sort({ createdAt: -1 });
         res.status(200).json(history);
     } catch (error: any) {
-        console.error("Failed to get history:", error);
-        res.status(500).json({ error: error.message || "An error occurred." });
+        console.error("Error in /history:", error.message);
+        if (!res.headersSent) {
+            res.status(500).json({ error: error.message || "An error occurred." });
+        }
     }
 });
+
+app.get("/health", (req: Request, res: Response) => {
+    res.status(200).json({ status: "ok" });
+});
+
+app.use((err: any, req: Request, res: Response, next: any) => {
+    console.error("Unhandled route error:", err.message);
+    if (!res.headersSent) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Serve static files from the "public" directory
+app.use(express.static(path.join(__dirname, "../public")))
+
+// Fallback wildcard route for React Routing
+app.get("*", (req: Request, res: Response) => {
+    res.sendFile(path.join(__dirname, "../public/index.html"))
+})
 
 export default app;
