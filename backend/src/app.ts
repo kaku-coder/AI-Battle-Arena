@@ -3,22 +3,14 @@ import type { Request, Response } from "express"
 import graph from "./services/grap.ai.service.js"
 import cors from 'cors'
 import Chat from "./schema/chatSchema.js"
-import { authMiddleware, AuthRequest } from "./middleware/auth.js"
-import authRoutes from "./routes/authRoutes.js"
 import comparisonRoutes from "./routes/comparisonRoutes.js"
 import leaderboardRoutes from "./routes/leaderboardRoutes.js"
-import path from "path"
-import { fileURLToPath } from "url"
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 const app = express()
 
 app.use(express.json())
 app.use(cors())
 
-app.use("/api/auth", authRoutes)
 app.use("/api/comparisons", comparisonRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 
@@ -87,13 +79,5 @@ app.use((err: any, req: Request, res: Response, next: any) => {
         res.status(500).json({ error: "Internal server error" });
     }
 });
-
-// Serve static files from the "public" directory
-app.use(express.static(path.join(__dirname, "../public")))
-
-// Fallback wildcard route for React Routing
-app.get("*", (req: Request, res: Response) => {
-    res.sendFile(path.join(__dirname, "../public/index.html"))
-})
 
 export default app;
