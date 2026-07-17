@@ -17,14 +17,26 @@ export const mistral = new ChatMistralAI({
     apiKey: config.MISTRAL_API_KEY,
     model: "mistral-large-latest",
     maxRetries: 0
-}).withFallbacks([gemini]);
+}).withFallbacks([
+    new ChatGroq({
+        apiKey: config.GROW_API_KEY,
+        model: "llama-3.1-8b-instant",
+        maxRetries: 0
+    })
+]);
 
 // model 2
 export const cohere = new ChatCohere({
     apiKey: config.COHERE_API_KEY,
     model: "command-r-plus-08-2024",
     maxRetries: 0
-}).withFallbacks([gemini]);
+}).withFallbacks([
+    new ChatGroq({
+        apiKey: config.GROW_API_KEY,
+        model: "llama-3.1-8b-instant",
+        maxRetries: 0
+    })
+]);
 
 
 export const grow = new ChatGroq({

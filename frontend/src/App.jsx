@@ -8,7 +8,6 @@ import Docs from './components/Docs'
 import HelpPage from './components/HelpPage'
 import SavedComparisons from './components/SavedComparisons'
 import './App.css'
-import { Analytics } from "@vercel/analytics/react"
 
 const API = 'http://localhost:3000'
 
