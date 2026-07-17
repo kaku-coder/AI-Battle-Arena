@@ -1,18 +1,19 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import SolutionCard from './components/SolutionCard'
 import JudgeVerdict from './components/JudgeVerdict'
 import Leaderboard from './components/Leaderboard'
 import History from './components/History'
 import Docs from './components/Docs'
+import HelpPage from './components/HelpPage'
+import SavedComparisons from './components/SavedComparisons'
 import './App.css'
-import axios from 'axios';
 
-
+const API = 'http://localhost:3000'
 
 export default function App() {
   const [problem, setProblem] = useState('')
-  const [activeChallenge, setActiveChallenge] = useState('How can I optimize a React application for better performance?')
+  const [activeChallenge, setActiveChallenge] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [result, setResult] = useState()
@@ -51,10 +52,10 @@ export default function App() {
     setSidebarOpen(false)
 
     try {
-      let res = await fetch('http://localhost:3000/graph', {
+      let res = await fetch(`${API}/graph`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problem: trimmed })
+        body: JSON.stringify({ problem: trimmed }),
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -62,15 +63,17 @@ export default function App() {
       }
 
       const data = await res.json()
-      console.log("Model 1:", data.model_1, "Model 2:", data.model_2)
       setResult(data)
       setIsLoading(false)
     } catch (err) {
       console.error(err)
-      setError(err.message)
+      if (err.message === 'Failed to fetch') {
+        setError('Cannot connect to server. Make sure backend is running on port 3000.')
+      } else {
+        setError(err.message)
+      }
       setIsLoading(false)
     }
-
   }
 
   const resetBattle = () => {
@@ -80,11 +83,16 @@ export default function App() {
     setError(null)
   }
 
+  const handleLoadComparison = (comp) => {
+    setActiveTab('arena')
+    resetBattle()
+  }
+
   const displaySolution1 = result?.solution_1 || (isLoading ? "Processing prompt... awaiting validation..." : "Awaiting prompt... please enter your programming query in the input bar below.")
   const displaySolution2 = result?.solution_2 || (isLoading ? "Synthesizing Node ecosystem... awaiting code..." : "Awaiting prompt... please enter your programming query in the input bar below.")
 
   return (
-    <div className="flex h-screen w-screen bg-void text-text-primary overflow-hidden relative">
+    <div className="flex h-screen w-screen bg-void text-text-primary relative">
       <div className="scene-bg" />
       <div className="hero-orb" />
 
@@ -92,29 +100,24 @@ export default function App() {
         isOpen={sidebarOpen}
         setIsOpen={setSidebarOpen}
         onNewBattle={resetBattle}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
       />
 
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <div className="flex-grow flex flex-col h-screen relative overflow-hidden z-10">
+      <div className="flex-1 flex flex-col h-screen relative z-10 min-w-0">
 
         {/* Top App Bar */}
-        <header className="fixed top-0 left-0 lg:left-64 right-0 z-40 flex justify-between items-center px-6 h-16 glass-strong border-b border-border-subtle">
-          <div className="flex items-center gap-4">
+        <header className="sticky top-0 left-0 right-0 z-30 flex justify-between items-center px-4 md:px-6 h-14 glass-strong border-b border-border-subtle shrink-0">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl bg-surface-raised border border-border-medium text-text-primary hover:bg-surface hover:text-text-primary active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+              className="p-2 rounded-xl bg-surface-raised border border-border-medium text-text-primary hover:bg-surface hover:text-text-primary active:scale-95 transition-all flex items-center justify-center cursor-pointer"
               title="Open Navigation"
             >
               <span className="material-symbols-outlined text-[20px]">menu</span>
             </button>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/10 border border-purple-500/20 flex items-center justify-center">
                 <span className="material-symbols-outlined text-[14px] text-purple-400">swords</span>
               </div>
@@ -123,12 +126,13 @@ export default function App() {
               </span>
             </div>
 
-            <nav className="hidden md:flex items-center gap-1 ml-6">
+            <nav className="hidden md:flex items-center gap-1 ml-4">
               {[
                 { id: 'arena', label: 'Arena', icon: 'swords' },
                 { id: 'leaderboard', label: 'Leaderboard', icon: 'leaderboard' },
                 { id: 'history', label: 'History', icon: 'history' },
-                { id: 'docs', label: 'Docs', icon: 'description' }
+                { id: 'saved', label: 'Saved', icon: 'bookmark' },
+                { id: 'help', label: 'Help', icon: 'help' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -155,25 +159,18 @@ export default function App() {
                 {theme === 'dark' ? 'light_mode' : 'dark_mode'}
               </span>
             </button>
-            <button className="p-2 hover:text-text-primary hover:bg-surface-raised rounded-xl transition-all cursor-pointer flex items-center justify-center text-text-secondary">
-              <span className="material-symbols-outlined text-[18px]">notifications</span>
-            </button>
-            <button className="p-2 hover:text-text-primary hover:bg-surface-raised rounded-xl transition-all cursor-pointer flex items-center justify-center text-text-secondary">
-              <span className="material-symbols-outlined text-[18px]">settings</span>
-            </button>
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/25 flex items-center justify-center text-[11px] font-black text-purple-400 font-mono ml-1 cursor-pointer hover:border-purple-500/40 transition-all">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/25 flex items-center justify-center text-[11px] font-black text-purple-400 font-mono ml-1">
               PR
             </div>
           </div>
         </header>
 
         {/* Main Canvas */}
-        <main className="flex-1 mt-16 pb-[140px] lg:pb-36 px-4 md:px-6 max-w-7xl mx-auto w-full flex flex-col gap-6 pt-6 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto px-4 md:px-6 pb-32 pt-4">
 
           {activeTab === 'arena' && (
-            <>
-              {/* Battle Header */}
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-5 anim-fade-up">
+            <div className="max-w-7xl mx-auto space-y-5">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-2 anim-fade-up">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2.5">
                     {result ? (
@@ -192,11 +189,6 @@ export default function App() {
                         STANDBY
                       </span>
                     )}
-                    {result && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/[0.03] text-text-muted border border-border-subtle rounded-lg text-[10px] font-mono">
-                        <span className="material-symbols-outlined text-[11px]">timer</span> 4.2s
-                      </span>
-                    )}
                   </div>
                   <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-text-primary">
                     {activeChallenge ? "System Architecture Generation" : "Arena Duel Ground"}
@@ -207,7 +199,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 2-Column Competitor Grid - FIXED: items-stretch prevents overlap */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch anim-fade-up stagger-1">
                 <SolutionCard
                   modelName={result?.model_1 || "Model A"}
@@ -229,7 +220,6 @@ export default function App() {
                 />
               </div>
 
-              {/* Loading Referee Status */}
               {isLoading && (
                 <div className="bg-card-bg/80 backdrop-blur-sm border border-amber-500/15 rounded-2xl p-5 flex items-center justify-center gap-4 w-full shadow-lg anim-scale">
                   <div className="relative">
@@ -249,7 +239,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* Judge's Breakdown */}
               {result && (
                 <div className="mt-4 anim-fade-up stagger-2">
                   <div className="flex items-center gap-2 mb-4">
@@ -271,7 +260,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* Error Notification */}
               {error && !result && (
                 <div className="bg-red-500/5 border border-red-500/15 text-red-400 text-sm p-4 rounded-2xl flex items-center gap-3 anim-scale">
                   <span className="material-symbols-outlined text-[20px]">error</span>
@@ -281,31 +269,40 @@ export default function App() {
                   </div>
                 </div>
               )}
-            </>
+            </div>
           )}
 
-          {activeTab === 'leaderboard' && <Leaderboard />}
+          {activeTab === 'leaderboard' && <div className="max-w-7xl mx-auto"><Leaderboard /></div>}
 
           {activeTab === 'history' && (
-            <History
-              onLoadChallenge={(prompt, data) => {
-                setError(null);
-                setProblem('');
-                setActiveChallenge(prompt);
-                setResult(data);
-                setActiveTab('arena');
-              }}
-            />
+            <div className="max-w-7xl mx-auto">
+              <History
+                onLoadChallenge={(prompt, data) => {
+                  setError(null);
+                  setProblem('');
+                  setActiveChallenge(prompt);
+                  setResult(data);
+                  setActiveTab('arena');
+                }}
+              />
+            </div>
           )}
 
-          {activeTab === 'docs' && <Docs />}
+          {activeTab === 'saved' && (
+            <div className="max-w-7xl mx-auto">
+              <SavedComparisons onLoadComparison={handleLoadComparison} />
+            </div>
+          )}
+
+          {activeTab === 'help' && <div className="max-w-7xl mx-auto"><HelpPage /></div>}
+          {activeTab === 'docs' && <div className="max-w-7xl mx-auto"><Docs /></div>}
 
         </main>
 
         {/* Bottom Input Bar */}
         {activeTab === 'arena' && (
           isLoading ? (
-            <div className="fixed bottom-[80px] lg:bottom-0 left-0 lg:left-64 right-0 p-4 bg-gradient-to-t from-void via-void/95 to-transparent z-40">
+            <div className="fixed bottom-14 md:bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-void via-void/95 to-transparent z-30">
               <div className="max-w-7xl mx-auto w-full flex items-center justify-center">
                 <button
                   onClick={() => {
@@ -322,12 +319,9 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div className="fixed bottom-[80px] lg:bottom-0 left-0 lg:left-64 right-0 p-4 bg-gradient-to-t from-void via-void/95 to-transparent z-40">
+            <div className="fixed bottom-14 md:bottom-0 left-0 right-0 p-3 md:p-4 bg-gradient-to-t from-void via-void/95 to-transparent z-30">
               <div className="max-w-7xl mx-auto w-full relative">
                 <div className="bg-card-bg/90 backdrop-blur-xl border border-border-medium rounded-2xl flex items-end p-2.5 focus-within:border-purple-500/40 focus-within:ring-2 focus-within:ring-purple-500/10 transition-all shadow-2xl shadow-black/30">
-                  <button className="p-2 text-text-muted hover:text-purple-400 transition-colors rounded-xl mb-0.5 cursor-pointer">
-                    <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                  </button>
                   <textarea
                     ref={textareaRef}
                     rows="1"
@@ -351,16 +345,17 @@ export default function App() {
         )}
 
         {/* Mobile Bottom Nav */}
-        <nav className="lg:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-16 glass-strong border-t border-border-subtle">
+        <nav className="md:hidden fixed bottom-0 w-full z-20 flex justify-around items-center px-2 pb-safe h-14 glass-strong border-t border-border-subtle">
           {[
             { id: 'arena', icon: 'swords', label: 'Arena' },
             { id: 'history', icon: 'history', label: 'History' },
-            { id: 'leaderboard', icon: 'leaderboard', label: 'Leaderboard' }
+            { id: 'leaderboard', icon: 'leaderboard', label: 'Leaderboard' },
+            { id: 'saved', icon: 'bookmark', label: 'Saved' },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center justify-center rounded-xl px-5 py-1.5 transition-all cursor-pointer ${activeTab === tab.id
+              className={`flex flex-col items-center justify-center rounded-xl px-3 py-1.5 transition-all cursor-pointer ${activeTab === tab.id
                   ? 'bg-purple-500/15 text-purple-400 border border-purple-500/25 scale-105'
                   : 'text-text-muted hover:text-purple-400'
                 }`}

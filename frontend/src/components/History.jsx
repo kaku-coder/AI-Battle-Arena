@@ -10,16 +10,13 @@ export default function History({ onLoadChallenge }) {
     async function fetchHistory() {
       try {
         const res = await fetch('http://localhost:3000/history')
-        if (!res.ok) {
-          throw new Error('Failed to fetch history')
-        }
+        if (!res.ok) throw new Error('Failed to fetch history')
         const data = await res.json()
-        
-        // Map database records to the component items structure
+
         const items = data.map((item) => {
           const m1 = item.model_1 || 'Model A'
           const m2 = item.model_2 || 'Model B'
-          
+
           let winnerLabel = 'Draw'
           if (item.winner === 'solution_1') winnerLabel = m1
           else if (item.winner === 'solution_2') winnerLabel = m2
@@ -39,7 +36,6 @@ export default function History({ onLoadChallenge }) {
             ? 'Just now'
             : date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 
-          // Detect potential language keywords from the prompt to make tag badges dynamic
           const detectedLangs = []
           const promptLower = item.problem.toLowerCase()
           if (promptLower.includes('javascript') || promptLower.includes(' js ') || promptLower.includes('react')) detectedLangs.push('JavaScript')
@@ -59,26 +55,29 @@ export default function History({ onLoadChallenge }) {
             data: item
           }
         })
-        
+
         setHistoryItems(items)
       } catch (err) {
         console.error('Error fetching history:', err)
-        setError(err.message)
+        if (err.message === 'Failed to fetch') {
+          setError('Cannot connect to server')
+        } else {
+          setError(err.message)
+        }
       } finally {
         setIsLoading(false)
       }
     }
-    
+
     fetchHistory()
   }, [])
 
-  const filteredItems = historyItems.filter(item => 
+  const filteredItems = historyItems.filter(item =>
     item.prompt.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
     <div className="space-y-6 anim-fade-up">
-      {/* Search & Filters */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative w-full sm:max-w-md">
           <span className="material-symbols-outlined text-text-muted text-lg absolute left-3.5 top-3">search</span>
@@ -95,21 +94,20 @@ export default function History({ onLoadChallenge }) {
         </span>
       </div>
 
-      {/* History List */}
       <div className="space-y-3">
         {isLoading ? (
           <div className="text-center py-16 bg-card-bg border border-border-subtle rounded-2xl">
             <div className="w-8 h-8 rounded-full border-2 border-purple-500/20 border-t-purple-500 animate-spin mx-auto mb-3" />
-            <p className="text-[13px] text-text-muted font-mono">Loading history from database...</p>
+            <p className="text-[13px] text-text-muted font-mono">Loading history...</p>
           </div>
         ) : error ? (
           <div className="text-center py-16 bg-card-bg border border-red-500/15 text-red-400 rounded-2xl">
             <span className="material-symbols-outlined text-red-400 text-4xl mb-3 block">error</span>
-            <p className="text-[13px] font-mono">Failed to load history: {error}</p>
+            <p className="text-[13px] font-mono">{error}</p>
           </div>
         ) : (
           filteredItems.map((item, i) => (
-            <div 
+            <div
               key={item.id}
               className={`bg-card-bg border border-border-subtle hover:border-purple-500/15 p-5 rounded-2xl flex flex-col md:flex-row justify-between gap-4 transition-all duration-300 relative group overflow-hidden premium-card anim-fade-up stagger-${i + 1}`}
             >
@@ -120,8 +118,8 @@ export default function History({ onLoadChallenge }) {
                   <span className="text-[9px] font-mono text-text-muted uppercase tracking-[0.12em]">{item.timestamp}</span>
                   <div className="flex gap-1.5">
                     {item.languages.map((lang, index) => (
-                      <span 
-                        key={index} 
+                      <span
+                        key={index}
                         className="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/15 rounded-lg font-mono text-[8px] uppercase tracking-wider font-bold"
                       >
                         {lang}
@@ -139,8 +137,8 @@ export default function History({ onLoadChallenge }) {
                   <div>
                     <span className="text-[8px] font-mono font-bold text-text-muted block mb-1 uppercase tracking-[0.12em]">WINNER</span>
                     <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg font-mono ${
-                      item.winner === 'Draw' 
-                        ? 'bg-white/[0.03] text-text-muted border border-border-subtle' 
+                      item.winner === 'Draw'
+                        ? 'bg-white/[0.03] text-text-muted border border-border-subtle'
                         : item.winner === (item.data.model_1 || 'Model A')
                           ? 'bg-blue-500/10 text-blue-400 border border-blue-500/15'
                           : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'
