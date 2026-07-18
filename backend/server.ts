@@ -1,4 +1,4 @@
-import app from "./src/app.js";
+import Chat from "./src/schema/chatSchema.ts";
 import { connectDatabase } from "./src/config/congi.js";
 
 const port = 3000;
