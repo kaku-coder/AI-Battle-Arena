@@ -138,8 +138,8 @@ export default function App() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${activeTab === tab.id
-                      ? 'bg-purple-500/15 text-purple-400 border border-purple-500/20'
-                      : 'text-text-muted hover:text-text-secondary hover:bg-white/[0.03]'
+                    ? 'bg-purple-500/15 text-purple-400 border border-purple-500/20'
+                    : 'text-text-muted hover:text-text-secondary hover:bg-white/[0.03]'
                     }`}
                 >
                   <span className="material-symbols-outlined text-[14px]">{tab.icon}</span>
@@ -356,8 +356,8 @@ export default function App() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex flex-col items-center justify-center rounded-xl px-3 py-1.5 transition-all cursor-pointer ${activeTab === tab.id
-                  ? 'bg-purple-500/15 text-purple-400 border border-purple-500/25 scale-105'
-                  : 'text-text-muted hover:text-purple-400'
+                ? 'bg-purple-500/15 text-purple-400 border border-purple-500/25 scale-105'
+                : 'text-text-muted hover:text-purple-400'
                 }`}
             >
               <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: activeTab === tab.id ? "'FILL' 1" : "" }}>

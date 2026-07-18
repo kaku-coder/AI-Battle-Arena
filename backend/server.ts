@@ -1,7 +1,9 @@
 import Chat from "./src/schema/chatSchema.ts";
 import { connectDatabase } from "./src/config/congi.js";
+import app from "./src/app.js";
 
-const port = 3000;
+const port = process.env.PORT || 3000;
+
 
 process.on("uncaughtException", (err) => {
   console.error("UNCAUGHT EXCEPTION:", err.message);

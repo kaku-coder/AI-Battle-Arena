@@ -107,9 +107,8 @@ export default function Leaderboard() {
                 {models.map((model) => (
                   <tr
                     key={model.rank}
-                    className={`hover:bg-white/[0.015] transition-colors group ${
-                      model.rank === 1 ? 'bg-amber-500/[0.015]' : ''
-                    }`}
+                    className={`hover:bg-white/[0.015] transition-colors group ${model.rank === 1 ? 'bg-amber-500/[0.015]' : ''
+                      }`}
                   >
                     <td className="py-3.5 px-5 text-center font-mono font-bold text-sm text-text-secondary">
                       {model.badge ? <span className="text-base">{model.badge}</span> : `#${model.rank}`}

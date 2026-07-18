@@ -136,13 +136,12 @@ export default function History({ onLoadChallenge }) {
                 <div className="flex items-center gap-4 text-center">
                   <div>
                     <span className="text-[8px] font-mono font-bold text-text-muted block mb-1 uppercase tracking-[0.12em]">WINNER</span>
-                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg font-mono ${
-                      item.winner === 'Draw'
+                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg font-mono ${item.winner === 'Draw'
                         ? 'bg-white/[0.03] text-text-muted border border-border-subtle'
                         : item.winner === (item.data.model_1 || 'Model A')
                           ? 'bg-blue-500/10 text-blue-400 border border-blue-500/15'
                           : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'
-                    }`}>
+                      }`}>
                       {item.winner}
                     </span>
                   </div>
