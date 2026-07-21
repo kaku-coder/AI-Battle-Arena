@@ -2,7 +2,7 @@ import express from "express"
 import type { Request, Response } from "express"
 import graph from "./services/grap.ai.service.js"
 import cors from 'cors'
-import Chat from "./schema/chatSchema.js"
+import chatSchema from "./schema/chatSchema.js"
 import comparisonRoutes from "./routes/comparisonRoutes.js"
 import leaderboardRoutes from "./routes/leaderboardRoutes.js"
 
