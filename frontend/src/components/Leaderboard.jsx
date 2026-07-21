@@ -12,7 +12,7 @@ export default function Leaderboard() {
 
   const fetchLeaderboard = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/leaderboard')
+      const res = await fetch('/api/leaderboard')
       if (!res.ok) throw new Error('Failed to fetch leaderboard')
       const data = await res.json()
       setModels(data.models || [])

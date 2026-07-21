@@ -9,7 +9,7 @@ import HelpPage from './components/HelpPage'
 import SavedComparisons from './components/SavedComparisons'
 import './App.css'
 
-const API = 'http://localhost:3000'
+const API = ''
 
 export default function App() {
   const [problem, setProblem] = useState('')

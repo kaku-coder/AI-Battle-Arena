@@ -27,7 +27,7 @@ export default function SavedComparisons({ onLoadComparison }) {
 
   const fetchComparisons = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/comparisons')
+      const res = await fetch('/api/comparisons')
       if (!res.ok) throw new Error('Failed to fetch')
       const data = await res.json()
       setComparisons(data)
@@ -42,7 +42,7 @@ export default function SavedComparisons({ onLoadComparison }) {
     e.preventDefault()
     setError('')
     try {
-      const res = await fetch('http://localhost:3000/api/comparisons', {
+      const res = await fetch('/api/comparisons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, model1, model2, judgeModel }),
@@ -65,7 +65,7 @@ export default function SavedComparisons({ onLoadComparison }) {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/comparisons/${id}`, {
+      const res = await fetch(`/api/comparisons/${id}`, {
         method: 'DELETE',
       })
       if (!res.ok) throw new Error('Failed to delete')
