@@ -5,6 +5,12 @@ import cors from 'cors'
 import chatSchema from "./schema/chatSchema.js"
 import comparisonRoutes from "./routes/comparisonRoutes.js"
 import leaderboardRoutes from "./routes/leaderboardRoutes.js"
+import path from "path"
+
+import { fileURLToPath } from "url"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const app = express()
 
@@ -13,6 +19,11 @@ app.use(cors())
 
 app.use("/api/comparisons", comparisonRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/", express.static("./public"))
+
+app.get("/", (req: Request, res: Response) => {
+    res.sendFile(path.join(__dirname, "../public/index.html"))
+})
 
 app.post("/graph", async (req: Request, res: Response) => {
     try {
