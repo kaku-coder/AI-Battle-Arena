@@ -6,7 +6,7 @@ That's basically what this project does — but with a really nice UI.
 
 You type in a programming challenge, and two different LLMs (Mistral Large and Cohere Command R+) independently generate solutions. Then a third AI (Llama 3.3 via Groq) judges both answers on correctness, complexity, readability, and scalability. Scores come back, a winner is declared, and the whole thing is saved to your history.
 
-![alt text](image.png)
+![alt text](image-1.png)
 
 ---
 
