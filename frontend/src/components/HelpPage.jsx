@@ -77,10 +77,22 @@ export default function HelpPage() {
     },
   ]
 
+  const faqGradients = [
+    'from-purple-500/[0.04] to-transparent',
+    'from-cyan-500/[0.04] to-transparent',
+    'from-amber-500/[0.04] to-transparent',
+    'from-emerald-500/[0.04] to-transparent',
+    'from-blue-500/[0.04] to-transparent',
+    'from-purple-500/[0.04] to-transparent',
+    'from-cyan-500/[0.04] to-transparent',
+    'from-amber-500/[0.04] to-transparent',
+  ]
+
   return (
-    <div className="space-y-8 anim-fade-up">
+    <div className="space-y-10 anim-fade-up">
+      {/* Header */}
       <div className="space-y-3">
-        <h3 className="text-2xl font-black text-text-primary tracking-tight bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+        <h3 className="text-3xl font-black text-text-primary tracking-tight bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
           Help & Support
         </h3>
         <p className="text-[13px] text-text-secondary leading-relaxed max-w-3xl">
@@ -90,28 +102,48 @@ export default function HelpPage() {
 
       {/* How It Works */}
       <div className="bg-card-bg border border-border-subtle rounded-2xl p-6 shadow-lg">
-        <div className="flex items-center gap-2.5 mb-6">
-          <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+        <div className="flex items-center gap-2.5 mb-8">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500/20 to-cyan-500/10 border border-purple-500/20 flex items-center justify-center">
             <span className="material-symbols-outlined text-purple-400 text-[16px]">route</span>
           </div>
-          <h4 className="text-sm font-extrabold text-text-primary">How It Works</h4>
+          <h4 className="text-sm font-extrabold text-text-primary tracking-wide">How It Works</h4>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {steps.map((step) => (
-            <div key={step.step} className="relative">
-              <div className="bg-void/60 border border-border-subtle rounded-xl p-5 text-center space-y-3 h-full">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto">
-                  <span className="material-symbols-outlined text-purple-400 text-xl">{step.icon}</span>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-0 md:gap-0 relative">
+          {steps.map((step, idx) => (
+            <div key={step.step} className="relative flex flex-col items-center">
+              {/* Step card */}
+              <div className="relative bg-void/60 border border-border-subtle rounded-2xl p-6 text-center space-y-4 w-full z-10 group hover:border-purple-500/30 transition-all duration-300">
+                {/* Numbered badge */}
+                <div className="relative mx-auto">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/25 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                    <span className="material-symbols-outlined text-purple-400 text-2xl">{step.icon}</span>
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                    <span className="text-[10px] font-black text-white">{step.step}</span>
+                  </div>
                 </div>
                 <div>
-                  <span className="text-[8px] font-mono font-bold text-purple-400 tracking-[0.2em] uppercase">Step {step.step}</span>
-                  <h5 className="text-[13px] font-bold text-text-primary mt-1">{step.title}</h5>
-                  <p className="text-[11px] text-text-muted mt-1 leading-relaxed">{step.description}</p>
+                  <h5 className="text-[13px] font-bold text-text-primary">{step.title}</h5>
+                  <p className="text-[11px] text-text-muted mt-1.5 leading-relaxed">{step.description}</p>
                 </div>
               </div>
+
+              {/* Connector line (desktop only) */}
               {step.step < 4 && (
-                <div className="hidden md:flex absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
-                  <span className="material-symbols-outlined text-text-muted/30 text-lg">chevron_right</span>
+                <div className="hidden md:flex absolute top-1/2 -right-3 transform -translate-y-1/2 z-20">
+                  <div className="flex items-center">
+                    <div className="w-4 h-[2px] bg-gradient-to-r from-purple-500/40 to-cyan-500/40"></div>
+                    <div className="w-0 h-0 border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent border-l-[6px] border-l-cyan-500/40"></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Connector line (mobile only) */}
+              {step.step < 4 && (
+                <div className="md:hidden flex flex-col items-center py-2">
+                  <div className="w-[2px] h-4 bg-gradient-to-b from-purple-500/40 to-cyan-500/40"></div>
+                  <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-cyan-500/40"></div>
                 </div>
               )}
             </div>
@@ -120,17 +152,20 @@ export default function HelpPage() {
       </div>
 
       {/* FAQ */}
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/20 flex items-center justify-center">
             <span className="material-symbols-outlined text-amber-400 text-[16px]">help</span>
           </div>
-          <h4 className="text-sm font-extrabold text-text-primary">Frequently Asked Questions</h4>
+          <h4 className="text-sm font-extrabold text-text-primary tracking-wide">Frequently Asked Questions</h4>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {faqs.map((faq, i) => (
-            <div key={i} className={`bg-card-bg border border-border-subtle p-5 rounded-2xl space-y-3 shadow-lg premium-card anim-fade-up stagger-${(i % 6) + 1}`}>
+            <div
+              key={i}
+              className={`relative bg-gradient-to-br ${faqGradients[i]} bg-card-bg border border-border-subtle p-5 rounded-2xl space-y-3 shadow-lg premium-card anim-fade-up stagger-${(i % 6) + 1} hover:border-${faq.color}-500/25 transition-all duration-300`}
+            >
               <div className="flex items-center gap-3">
                 <div className={`w-9 h-9 rounded-xl bg-${faq.color}-500/10 border border-${faq.color}-500/15 flex items-center justify-center shrink-0`}>
                   <span className={`material-symbols-outlined text-${faq.color}-400 text-[18px]`}>{faq.icon}</span>
@@ -146,19 +181,24 @@ export default function HelpPage() {
       </div>
 
       {/* Contact */}
-      <div className="bg-card-bg border border-border-subtle rounded-2xl p-6 shadow-lg text-center">
-        <span className="material-symbols-outlined text-purple-400 text-3xl mb-3 block">support_agent</span>
-        <h4 className="text-sm font-extrabold text-text-primary mb-2">Still have questions?</h4>
-        <p className="text-[12px] text-text-muted mb-4">
-          Our support team is here to help. Reach out and we'll get back to you as soon as possible.
-        </p>
-        <a
-          href="mailto:support@aibattlearena.com"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600/10 text-purple-400 border border-purple-500/20 rounded-xl text-[12px] font-bold hover:bg-purple-600 hover:text-white transition-all active:scale-95"
-        >
-          <span className="material-symbols-outlined text-[16px]">mail</span>
-          Contact Support
-        </a>
+      <div className="relative bg-card-bg border border-border-subtle rounded-2xl p-8 shadow-lg text-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.03] via-transparent to-cyan-500/[0.03] pointer-events-none"></div>
+        <div className="relative z-10">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/15 to-cyan-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-4">
+            <span className="material-symbols-outlined text-purple-400 text-3xl">support_agent</span>
+          </div>
+          <h4 className="text-base font-extrabold text-text-primary mb-2">Still have questions?</h4>
+          <p className="text-[12px] text-text-muted mb-5 max-w-md mx-auto leading-relaxed">
+            Our support team is here to help. Reach out and we'll get back to you as soon as possible.
+          </p>
+          <a
+            href="mailto:support@aibattlearena.com"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600/15 to-cyan-600/10 text-purple-400 border border-purple-500/25 rounded-xl text-[12px] font-bold hover:from-purple-600 hover:to-purple-600 hover:text-white hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300 active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[16px]">mail</span>
+            Contact Support
+          </a>
+        </div>
       </div>
     </div>
   )
