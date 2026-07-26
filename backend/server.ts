@@ -1,4 +1,4 @@
-import Chat from "./src/schema/chatSchema.ts";
+import Chat from "./src/schema/chatSchema.js";
 import { connectDatabase } from "./src/config/congi.js";
 import app from "./src/app.js";
 
