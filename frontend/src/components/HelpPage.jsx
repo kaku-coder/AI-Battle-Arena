@@ -34,13 +34,7 @@ export default function HelpPage() {
       icon: 'history',
       color: 'purple',
       question: 'Can I view my battle history?',
-      answer: 'Yes! All your battles are saved to your account. Visit the History page to search and review past comparisons. You can reload any previous battle result into the arena.',
-    },
-    {
-      icon: 'person',
-      color: 'cyan',
-      question: 'Do I need an account?',
-      answer: 'Yes, you need to create a free account to use AI Battle Arena. Authentication ensures your battle history, saved comparisons, and leaderboard stats are preserved and linked to your profile.',
+      answer: 'Yes! All your battles are saved automatically. Visit the History page to search and review past comparisons. You can reload any previous battle result into the arena.',
     },
     {
       icon: 'speed',
@@ -53,24 +47,18 @@ export default function HelpPage() {
   const steps = [
     {
       step: 1,
-      icon: 'person_add',
-      title: 'Create Account',
-      description: 'Sign up with your email to get started. Your data is securely stored.',
-    },
-    {
-      step: 2,
       icon: 'edit_note',
       title: 'Enter Challenge',
       description: 'Type a programming question or task in the arena input bar.',
     },
     {
-      step: 3,
+      step: 2,
       icon: 'swords',
       title: 'Watch the Battle',
       description: 'Two AI models generate solutions simultaneously in real-time.',
     },
     {
-      step: 4,
+      step: 3,
       icon: 'gavel',
       title: 'Get Verdict',
       description: 'An AI judge scores both solutions and declares a winner with detailed analysis.',
@@ -130,7 +118,7 @@ export default function HelpPage() {
               </div>
 
               {/* Connector line (desktop only) */}
-              {step.step < 4 && (
+              {step.step < 3 && (
                 <div className="hidden md:flex absolute top-1/2 -right-3 transform -translate-y-1/2 z-20">
                   <div className="flex items-center">
                     <div className="w-4 h-[2px] bg-gradient-to-r from-purple-500/40 to-cyan-500/40"></div>
@@ -140,7 +128,7 @@ export default function HelpPage() {
               )}
 
               {/* Connector line (mobile only) */}
-              {step.step < 4 && (
+              {step.step < 3 && (
                 <div className="md:hidden flex flex-col items-center py-2">
                   <div className="w-[2px] h-4 bg-gradient-to-b from-purple-500/40 to-cyan-500/40"></div>
                   <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-cyan-500/40"></div>

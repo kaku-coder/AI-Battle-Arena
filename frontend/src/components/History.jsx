@@ -146,7 +146,7 @@ export default function History({ onLoadChallenge }) {
           filteredItems.map((item, i) => (
             <div
               key={item.id}
-              className="group/card relative rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 anim-fade-up stagger-${i + 1}"
+              className={`group/card relative rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 anim-fade-up stagger-${i + 1}`}
             >
               <div className="absolute -inset-[1px] bg-gradient-to-r from-purple-600/0 via-violet-500/0 to-cyan-600/0 group-hover/card:from-purple-600/20 group-hover/card:via-violet-500/10 group-hover/card:to-cyan-600/15 rounded-[25px] transition-all duration-700" />
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-500/[0.03] to-cyan-500/[0.02] opacity-0 group-hover/card:opacity-100 transition-opacity duration-500" />

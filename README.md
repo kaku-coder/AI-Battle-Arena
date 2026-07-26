@@ -1,135 +1,211 @@
-# ⚔️ AI Battle Arena
+# AI Battle Arena
 
-AI Battle Arena is a state-of-the-art web application that compares responses from multiple leading Large Language Models (LLMs) in real time. It utilizes a structured AI referee to evaluate answer quality, grade solutions, and persist battle histories in a MongoDB database.
+Two AI models walk into a bar. One writes code. The other writes better code. An AI judge decides who wins.
 
----
+That's basically what this project does — but with a really nice UI.
 
-## 🚀 Key Features
+You type in a programming challenge, and two different LLMs (Mistral Large and Cohere Command R+) independently generate solutions. Then a third AI (Llama 3.3 via Groq) judges both answers on correctness, complexity, readability, and scalability. Scores come back, a winner is declared, and the whole thing is saved to your history.
 
-* **Dual-Model Duels:** Pits **Mistral Large** (`mistral-large-latest`) against **Cohere Command R+** (`command-r-plus-08-2024`) in parallel to solve programming and architecture problems.
-* **Structured AI Referee:** Employs **Llama 3.3 (Groq)** as an expert evaluator. The judge scores both responses out of 10 and provides structured reasoning based on:
-  * Correctness
-  * Time & Space Complexity
-  * Readability & Best Practices
-  * Scalability
-* **Interactive Arena UI:** A stunning, dark-mode glassmorphism interface featuring custom micro-animations, code syntax highlighting, tabbed navigation (Arena, History, Leaderboard, Docs), and responsive layouts.
-* **Persistent Duel History:** Backed by MongoDB to automatically store every duel (prompts, raw solutions, scores, and winner details) and reload past battles into the arena in one click.
+![alt text](image.png)
 
 ---
 
-## 📐 System Architecture
+## How it actually works
 
-The backend utilizes **LangGraph** (`@langchain/langgraph`) to orchestrate a state-driven workflow for generating and judging responses. 
+The backend is built on **LangGraph** — a framework for running multi-step AI workflows as a state graph. Here's the flow:
 
-```mermaid
-graph TD
-    User([User Prompt]) --> START
-    START --> NodeA[generateSolutions Node]
-    
-    subgraph Parallel Generation
-        NodeA --> |Invoke| Mistral[Mistral Large]
-        NodeA --> |Invoke| Cohere[Cohere Command R+]
-    end
+```
+Your Prompt
+    │
+    ▼
+┌──────────────────────────┐
+│   generateSolutions      │
+│   (runs in parallel)     │
+├────────────┬─────────────┤
+│            │             │
+▼            ▼             │
+Mistral    Cohere          │
+Large      Command R+      │
+│            │             │
+└────────────┴─────────────┘
+         │
+         ▼
+┌──────────────────────────┐
+│      judgeNode           │
+│  Llama 3.3 (Groq)       │
+│  ↓ fallback: Gemini 2.0  │
+└──────────────────────────┘
+         │
+         ▼
+   Score & Save to DB
+```
 
-    Mistral --> NodeB[judgeNode Node]
-    Cohere --> NodeB
+Both models get the same prompt at the same time (parallel execution via `Promise.all`). The judge gets both solutions plus the original prompt, scores each on a 0-10 scale, and picks a winner. If Groq goes down, Gemini picks up the judging automatically.
 
-    subgraph Evaluation
-        NodeB --> |Structured Output| Groq[Llama 3.3 on Groq]
-    end
+Each contestant model also has a fallback — if Mistral or Cohere fails, Groq's Llama 3.1 8B steps in. So the whole thing is pretty resilient.
 
-    Groq --> Save[Save to MongoDB]
-    Save --> END[Return Payload to UI]
+---
+
+## Screenshots
+
+> _Add your screenshots here_
+
+| Arena | Judge Verdict | Leaderboard |
+|-------|---------------|-------------|
+| ![Arena](frontend/src/assets/hero.png) | ![Verdict](frontend/src/assets/hero.png) | ![Leaderboard](frontend/src/assets/hero.png) |
+
+---
+
+## Tech Stack
+
+**Frontend**
+- React 19 + Vite 8
+- Tailwind CSS 4
+- Google Material Symbols
+- Custom glassmorphism design system
+- Dark/Light theme toggle
+
+**Backend**
+- Express 5 + TypeScript
+- LangChain + LangGraph (workflow orchestration)
+- MongoDB + Mongoose
+- Zod (structured output validation)
+
+**AI Models**
+| Role | Model | Provider | Fallback |
+|------|-------|----------|----------|
+| Contestant A | Mistral Large | Mistral AI | Groq Llama 3.1 8B |
+| Contestant B | Cohere Command R+ | Cohere | Groq Llama 3.1 8B |
+| Judge | Llama 3.3 70B | Groq | Gemini 2.0 Flash |
+
+---
+
+## Project Structure
+
+```
+aiBattarlAerana/
+├── backend/
+│   ├── server.ts                     # Entry point
+│   ├── src/
+│   │   ├── app.ts                    # Express routes
+│   │   ├── config/congi.ts           # Config + MongoDB connection
+│   │   ├── services/
+│   │   │   ├── grap.ai.service.ts    # LangGraph workflow
+│   │   │   └── model.service.ts      # LLM initializations
+│   │   ├── schema/
+│   │   │   ├── chatSchema.ts         # Battle schema
+│   │   │   └── comparisonSchema.ts   # Saved comparison schema
+│   │   └── routes/
+│   │       ├── comparisonRoutes.ts   # CRUD for comparison presets
+│   │       └── leaderboardRoutes.ts  # Leaderboard + ELO calculation
+│   └── .env                          # API keys (gitignored)
+│
+└── frontend/
+    ├── src/
+    │   ├── App.jsx                   # Main app — tabs, state, arena logic
+    │   ├── index.css                 # Full design system (700+ lines)
+    │   └── components/
+    │       ├── Sidebar.jsx
+    │       ├── SolutionCard.jsx      # Model response display
+    │       ├── JudgeVerdict.jsx      # Score breakdown
+    │       ├── Leaderboard.jsx       # ELO rankings
+    │       ├── History.jsx           # Past battles
+    │       ├── SavedComparisons.jsx  # Model matchup presets
+    │       ├── HelpPage.jsx
+    │       ├── Docs.jsx
+    │       ├── ChatItem.jsx
+    │       └── TypewriterEffect.jsx
+    └── vite.config.js
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## API Endpoints
 
-### Frontend
-* **Core:** React, JavaScript (ES6+)
-* **Styling:** Custom CSS (Premium Glassmorphism, animations, custom scrollbars)
-* **Icons:** Google Material Symbols
-
-### Backend
-* **Runtime:** Node.js, TypeScript, `tsx` (TypeScript Execute)
-* **Framework:** Express
-* **Orchestration:** LangChain, LangGraph
-* **Database:** MongoDB & Mongoose
-
----
-
-## ⚙️ Environment Configuration
-
-Create a `.env` file inside the `backend` directory with the following variables:
-
-```env
-# Server Port
-PORT=3000
-
-# Database URL
-MONGOOSE_URL=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>
-
-# API Keys for AI Providers
-GOOGLE_API_KEY=your_google_gemini_key_here
-MISTRAL_API_KEY=your_mistral_api_key_here
-COHERE_API_KEY=your_cohere_api_key_here
-GROW_API_KEY=your_groq_api_key_here
-```
+| Method | Endpoint | What it does |
+|--------|----------|-------------|
+| POST | `/graph` | Run a battle — send `{ "problem": "your prompt" }` |
+| GET | `/history` | Get all past battles |
+| GET | `/health` | Server health check |
+| GET | `/api/leaderboard` | Model rankings with ELO scores |
+| GET | `/api/comparisons` | List saved comparison presets |
+| POST | `/api/comparisons` | Create a new preset |
+| DELETE | `/api/comparisons/:id` | Delete a preset |
 
 ---
 
-## 💻 Quick Start
+## Setup
 
-### 1. Clone the repository and install dependencies
+### Prerequisites
+
+- Node.js (v18+)
+- MongoDB Atlas account (or local MongoDB)
+- API keys for Mistral, Cohere, Groq, and Google AI
+
+### 1. Clone and install
+
 ```bash
-# Clone the repository
 git clone https://github.com/kaku-coder/AI-Battle-Arena.git
 cd AI-Battle-Arena
 
-# Install Backend dependencies
+# Backend
 cd backend
 npm install
 
-# Install Frontend dependencies
+# Frontend
 cd ../frontend
 npm install
 ```
 
-### 2. Run the development environment
+### 2. Environment variables
 
-Open two terminal sessions:
+Create a `.env` file in the `backend/` folder:
 
-* **Start Backend:**
-  ```bash
-  cd backend
-  npm run dev
-  # Server will run on port 3000
-  ```
+```env
+PORT=3000
+MONGOOSE_URL=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/<dbname>
 
-* **Start Frontend:**
-  ```bash
-  cd frontend
-  npm run dev
-  # Frontend will run locally (typically port 5173)
-  ```
+GOOGLE_API_KEY=your_key
+MISTRAL_API_KEY=your_key
+COHERE_API_KEY=your_key
+GROW_API_KEY=your_key
+```
+
+### 3. Run it
+
+Open two terminals:
+
+**Terminal 1 — Backend:**
+```bash
+cd backend
+npm run dev
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+Backend runs on `http://localhost:3000`, frontend on `http://localhost:5173`.
 
 ---
 
-## 💾 Database Schema
+## Database
 
-Battles are stored using a Mongoose schema in `backend/src/schema/chatSchema.js`:
+Two MongoDB collections:
 
-```javascript
+**chats** — Every battle ever run
+```js
 {
-  problem: { type: String, required: true },  // The user prompt
-  userId: { type: String, default: "guest" }, // User ID identifier
-  solution_1: String,                         // Model A solution
-  solution_2: String,                         // Model B solution
-  model_1: String,                            // Model A name
-  model_2: String,                            // Model B name
-  judge_model: String,                        // Referee model name
-  winner: String,                             // "solution_1", "solution_2", or "draw"
+  problem: String,          // The prompt
+  userId: String,           // "guest" by default
+  solution_1: String,       // Model A's response
+  solution_2: String,       // Model B's response
+  model_1: String,          // "Mistral Large"
+  model_2: String,          // "Cohere Command R+"
+  judge_model: String,      // "Llama 3.3 (Groq)"
+  winner: String,           // "solution_1" | "solution_2" | "draw"
   judge: {
     solution_1_score: Number,
     solution_2_score: Number,
@@ -139,7 +215,59 @@ Battles are stored using a Mongoose schema in `backend/src/schema/chatSchema.js`
 }
 ```
 
+**comparisons** — Saved matchup presets
+```js
+{
+  name: String,         // "Code Quality Battle"
+  model1: String,       // "Mistral Large"
+  model2: String,       // "Cohere Command R+"
+  judgeModel: String    // "Llama 3.3 (Groq)"
+}
+```
+
 ---
 
-## 📄 License
-This project is licensed under the MIT License.
+## Features in Detail
+
+### The Arena
+Type any programming challenge — "write a binary search in Python", "design a URL shortener", "implement a LRU cache" — and hit Enter. Two AI models independently generate solutions side by side with a typewriter animation. The judge evaluates both and picks a winner.
+
+### Leaderboard
+Tracks every model's performance across all battles. Uses a custom ELO-style rating system: `1000 + (winRate * 5) + (avgScore * 20)`. Shows win rate bars, average scores, and rank badges.
+
+### History
+All your past battles are saved automatically. Search through them, click "Load in Arena" to re-run or review any previous result.
+
+### Saved Comparisons
+Save your favorite model matchups as presets. Pick Model A, Model B, and the judge model — save it and load it instantly next time.
+
+### Docs
+Explains the LangGraph workflow, contestant models, judge criteria, and the synthesized master guide concept.
+
+### Dark/Light Theme
+Full theme toggle in the top-right corner. Both themes are implemented with CSS custom properties.
+
+---
+
+## How the Judge Thinks
+
+The judge model receives a system prompt asking it to evaluate solutions on:
+
+1. **Correctness** — Does the code actually work?
+2. **Time Complexity** — Is the algorithm efficient?
+3. **Space Complexity** — Memory usage
+4. **Readability** — Clean code, good naming, comments
+5. **Scalability** — Can it handle growth?
+6. **Best Practices** — Language idioms, error handling
+
+It scores each solution 0-10, provides reasoning, and returns structured JSON (validated with Zod). The model with the higher score wins. If scores are equal, it's a draw.
+
+---
+
+## License
+
+MIT — do whatever you want with it.
+
+---
+
+Built by [kaku-coder](https://github.com/kaku-coder)
