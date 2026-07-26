@@ -48,14 +48,7 @@ Each contestant model also has a fallback — if Mistral or Cohere fails, Groq's
 
 ## Screenshots
 
-> _Add your screenshots here_
-
-| Arena | Judge Verdict | Leaderboard |
-|-------|---------------|-------------|
-| ![Arena](frontend/src/assets/hero.png) | ![Verdict](frontend/src/assets/hero.png) | ![Leaderboard](frontend/src/assets/hero.png) |
-
----
-
+![alt text](image-2.png)
 ## Tech Stack
 
 **Frontend**
